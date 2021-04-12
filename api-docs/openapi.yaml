@@ -1,0 +1,656 @@
+openapi: 3.0.1
+info:
+  title: Performance Review Feedback App
+  description: 'This is the API definition for Employee Performance Review Feedback Application'
+  contact:
+    email: oezeci@gmail.com
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  version: 1.0.0
+servers:
+- url: http://localhost:8000/api
+tags:
+- name: employee
+  description: everything about the employees
+- name: performance-review
+  description: performance review feedback
+- name: admin
+  description: manage operations about assingments
+paths:
+  /employees:
+    get:
+      tags:
+      - employee
+      summary: show list of employees
+      operationId: listEmployees
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Employee'
+        400:
+          description: Invalid ID supplied
+          content: {}
+        404:
+          description: Employee not found
+          content: {}
+        405:
+          description: Validation exception
+          content: {}
+    put:
+      tags:
+      - employee
+      summary: Update an existing employee
+      operationId: updateEmployee
+      requestBody:
+        description: Employee object that needs to be added to the db
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Employee'
+        required: true
+      responses:
+        400:
+          description: Invalid ID supplied
+          content: {}
+        404:
+          description: Employee not found
+          content: {}
+        405:
+          description: Validation exception
+          content: {}
+      x-codegen-request-body-name: body
+    post:
+      tags:
+      - employee
+      summary: Add a new employee to the db
+      operationId: addEmployee
+      requestBody:
+        description: Employee object that needs to be added to the db
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Employee'
+        required: true
+      responses:
+        405:
+          description: Invalid input
+          content: {}
+      x-codegen-request-body-name: body
+  /employees/search:
+    get:
+      tags:
+      - employee
+      summary: Finds employees by status
+      description: Multiple status values can be provided with comma separated strings
+      operationId: findEmployees
+      parameters:
+      - name: status
+        in: query
+        description: Status values that need to be considered for filter
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: array
+          items:
+            type: string
+            default: available
+            enum:
+            - available
+            - pending
+            - sold
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Employee'
+        400:
+          description: Invalid status value
+          content: {}
+  /employees/{id}:
+    get:
+      tags:
+      - employee
+      summary: Find employee by ID
+      description: Returns a single employee
+      operationId: getEmployeeById
+      parameters:
+      - name: id
+        in: path
+        description: ID of employee to return
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+        400:
+          description: Invalid ID supplied
+          content: {}
+        404:
+          description: Employee not found
+          content: {}
+    post:
+      tags:
+      - pet
+      summary: Updates an employee in the db with form data
+      operationId: updateEmployeeWithForm
+      parameters:
+      - name: id
+        in: path
+        description: ID of employee that needs to be updated
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                name:
+                  type: string
+                  description: Updated name of the employee
+                status:
+                  type: string
+                  description: Updated status of the employee
+      responses:
+        405:
+          description: Invalid input
+          content: {}
+    delete:
+      tags:
+      - pet
+      summary: Deletes an employee
+      operationId: deleteEmployee
+      parameters:
+      - name: api_key
+        in: header
+        schema:
+          type: string
+      - name: id
+        in: path
+        description: Employee id to delete
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        400:
+          description: Invalid ID supplied
+          content: {}
+        404:
+          description: Employee not found
+          content: {}
+  /employees/{id}/uploadImage:
+    post:
+      tags:
+      - employee
+      summary: uploads an image
+      operationId: uploadFile
+      parameters:
+      - name: id
+        in: path
+        description: ID of employee to update
+        required: true
+        schema:
+          type: integer
+          format: int64
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              properties:
+                additionalMetadata:
+                  type: string
+                  description: Additional data to pass to server
+                file:
+                  type: string
+                  description: file to upload
+                  format: binary
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /performance-reviews:
+    get:
+      tags:
+      - performance-review
+      summary: Returns performance-reviews for all employees
+      description: Returns a list of performance-review
+      operationId: getPerformanceReview
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: integer
+                  format: int32
+      security:
+      - api_key: []
+    post:
+      tags:
+      - performance-review
+      summary: Post performance review for an employee
+      operationId: postPerformanceReview
+      requestBody:
+        description: performance review posted for employee
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/performanceReview'
+        required: true
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/performanceReview'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/performanceReview'
+        400:
+          description: Invalid Order
+          content: {}
+      x-codegen-request-body-name: body
+  /performance-reviews/{idEmployee}:
+    get:
+      tags:
+      - store
+      summary: Find performance-review by employee ID
+      description: For valid response try integer IDs with value >= 1 and <= 10.         Other
+        values will generated exceptions
+      operationId: getPerformanceReviewByEmployeeId
+      parameters:
+      - name: idEmployee
+        in: path
+        description: ID of the employee that needs to be reviewed
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/performanceReview'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/performanceReview'
+        400:
+          description: Invalid ID supplied
+          content: {}
+        404:
+          description: Employee not found
+          content: {}
+    delete:
+      tags:
+      - store
+      summary: Delete performance review by employee ID
+      description: For valid response try integer IDs with positive integer value.         Negative
+        or non-integer values will generate API errors
+      operationId: deletePerformanceReview
+      parameters:
+      - name: idEmployee
+        in: path
+        description: ID of the employee whose review needs to be deleted
+        required: true
+        schema:
+          type: integer
+          format: int64
+      responses:
+        400:
+          description: Invalid ID supplied
+          content: {}
+        404:
+          description: Employee not found
+          content: {}
+  /user:
+    post:
+      tags:
+      - user
+      summary: Create user
+      description: This can only be done by the logged in user.
+      operationId: createUser
+      requestBody:
+        description: Created user object
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        default:
+          description: successful operation
+          content: {}
+      x-codegen-request-body-name: body
+  /user/createWithArray:
+    post:
+      tags:
+      - user
+      summary: Creates list of users with given input array
+      operationId: createUsersWithArrayInput
+      requestBody:
+        description: List of user object
+        content:
+          '*/*':
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        default:
+          description: successful operation
+          content: {}
+      x-codegen-request-body-name: body
+  /user/createWithList:
+    post:
+      tags:
+      - user
+      summary: Creates list of users with given input array
+      operationId: createUsersWithListInput
+      requestBody:
+        description: List of user object
+        content:
+          '*/*':
+            schema:
+              type: array
+              items:
+                $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        default:
+          description: successful operation
+          content: {}
+      x-codegen-request-body-name: body
+  /user/login:
+    get:
+      tags:
+      - user
+      summary: Logs user into the system
+      operationId: loginUser
+      parameters:
+      - name: username
+        in: query
+        description: The user name for login
+        required: true
+        schema:
+          type: string
+      - name: password
+        in: query
+        description: The password for login in clear text
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: successful operation
+          headers:
+            X-Rate-Limit:
+              description: calls per hour allowed by the user
+              schema:
+                type: integer
+                format: int32
+            X-Expires-After:
+              description: date in UTC when token expires
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/xml:
+              schema:
+                type: string
+            application/json:
+              schema:
+                type: string
+        400:
+          description: Invalid username/password supplied
+          content: {}
+  /user/logout:
+    get:
+      tags:
+      - user
+      summary: Logs out current logged in user session
+      operationId: logoutUser
+      responses:
+        default:
+          description: successful operation
+          content: {}
+  /user/{username}:
+    get:
+      tags:
+      - user
+      summary: Get user by user name
+      operationId: getUserByName
+      parameters:
+      - name: username
+        in: path
+        description: 'The name that needs to be fetched. Use user1 for testing. '
+        required: true
+        schema:
+          type: string
+      responses:
+        200:
+          description: successful operation
+          content:
+            application/xml:
+              schema:
+                $ref: '#/components/schemas/User'
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        400:
+          description: Invalid username supplied
+          content: {}
+        404:
+          description: User not found
+          content: {}
+    put:
+      tags:
+      - user
+      summary: Updated user
+      description: This can only be done by the logged in user.
+      operationId: updateUser
+      parameters:
+      - name: username
+        in: path
+        description: name that need to be updated
+        required: true
+        schema:
+          type: string
+      requestBody:
+        description: Updated user object
+        content:
+          '*/*':
+            schema:
+              $ref: '#/components/schemas/User'
+        required: true
+      responses:
+        400:
+          description: Invalid user supplied
+          content: {}
+        404:
+          description: User not found
+          content: {}
+      x-codegen-request-body-name: body
+    delete:
+      tags:
+      - user
+      summary: Delete user
+      description: This can only be done by the logged in user.
+      operationId: deleteUser
+      parameters:
+      - name: username
+        in: path
+        description: The name that needs to be deleted
+        required: true
+        schema:
+          type: string
+      responses:
+        400:
+          description: Invalid username supplied
+          content: {}
+        404:
+          description: User not found
+          content: {}
+components:
+  schemas:
+    performanceReview:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        idEmployee:
+          type: integer
+          format: int64
+        idReviewer:
+          type: integer
+          format: int64  
+        quantity:
+          type: integer
+          format: int32
+        reviewDate:
+          type: string
+          format: date-time
+        status:
+          type: string
+          description: Order Status
+          enum:
+          - placed
+          - approved
+          - delivered
+        complete:
+          type: boolean
+          default: false
+      xml:
+        name: Order
+    Category:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      xml:
+        name: Category
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        username:
+          type: string
+        firstName:
+          type: string
+        lastName:
+          type: string
+        email:
+          type: string
+        password:
+          type: string
+        phone:
+          type: string
+        userStatus:
+          type: integer
+          description: User Status
+          format: int32
+      xml:
+        name: Employee
+    Tag:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        name:
+          type: string
+      xml:
+        name: Tag
+    Pet:
+      required:
+      - name
+      - photoUrls
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int64
+        category:
+          $ref: '#/components/schemas/Category'
+        name:
+          type: string
+          example: doggie
+        photoUrls:
+          type: array
+          xml:
+            name: photoUrl
+            wrapped: true
+          items:
+            type: string
+        tags:
+          type: array
+          xml:
+            name: tag
+            wrapped: true
+          items:
+            $ref: '#/components/schemas/Tag'
+        status:
+          type: string
+          description: pet status in the store
+          enum:
+          - available
+          - pending
+          - sold
+      xml:
+        name: Pet
+    ApiResponse:
+      type: object
+      properties:
+        code:
+          type: integer
+          format: int32
+        type:
+          type: string
+        message:
+          type: string
+  securitySchemes:
+    petstore_auth:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: http://petstore.swagger.io/oauth/dialog
+          scopes:
+            write:pets: modify pets in your account
+            read:pets: read your pets
+    api_key:
+      type: apiKey
+      name: api_key
+      in: header
